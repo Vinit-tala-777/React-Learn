@@ -1,74 +1,82 @@
-// Form element aur list containers ko exact IDs ke through grab karo
-var todoForm   = document.getElementById("todo-form");
-var todoList   = document.getElementById("todo-list");
+// Get form and task list
+var form = document.getElementById("todo-form");
+var list = document.getElementById("todo-list");
 
-// Form submission ko listen karo
-todoForm.addEventListener("submit", function(e) {
-    // Page ko reload hone se roko
-    e.preventDefault();
+// Show saved tasks when page loads
+var tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-    // Submit handler ke andar specific input elements ko grab karo
-    var titleInput       = document.getElementById("todo-title");
-    var descriptionInput = document.getElementById("todo-description");
-    var dateInput        = document.getElementById("todo-date");
-    var prioritySelect   = document.getElementById("todo-priority");
-
-    // Values ko extract karo aur spacing ko trim karo
-    var title = titleInput.value.trim();
-    var desc  = descriptionInput.value.trim();
-    var date  = dateInput.value;
-    var priority = prioritySelect.value;
-
-    // Agar "No tasks yet" message hai toh use remove karo
-    var emptyMessage = todoList.querySelector(".empty-message");
-    if (emptyMessage) {
-        emptyMessage.remove();
-    }
-
-    // Task block ke liye naya list item banao
-    var li = document.createElement("li");
-    li.className = "task-item"; // CSS me hook karne ke liye clean class name
-
-    // Internal HTML elements ko manually build karo 
-    var taskHTML = "";
-    taskHTML += "<h3>" + title + "</h3>";
-    taskHTML += "<p class='task-desc'>" + desc + "</p>";
-    taskHTML += "<p class='task-meta'>";
-    taskHTML += "<strong>Due:</strong> " + date + " | ";
-    taskHTML += "<strong>Priority:</strong> " + priority;
-    taskHTML += "</p>";
-    
-    // Item ko baad me remove karne ke liye simple button add karo
-    taskHTML += "<button type='button' class='delete-btn' onclick='removeTask(this)'>Delete</button>";
-
-    // Inside contents ko set karke list me append karo
-    li.innerHTML = taskHTML;
-    todoList.appendChild(li);
-
-    // Fields ko poora reset karo taaki fresh task likh sake
-   // todoForm.reset();
-});
-
-// Alag clear helper function jo explicit task block ko discard kare
-function removeTask(buttonElement) 
-{
-    // Parent list item ko get karke wipe out karo
-    var item = buttonElement.parentElement;
-    item.remove();
-
-    // Agar list bilkul empty hai, toh original message wapas daalo
-    if (todoList.children.length === 0) {
-        var emptyLi = document.createElement("li");
-        emptyLi.className = "empty-message";
-        emptyLi.textContent = "No tasks yet. Add your first task.";
-        todoList.appendChild(emptyLi);
-    }
+for (var i = 0; i < tasks.length; i++) {
+    showTask(tasks[i]);
 }
 
-// GitHub push commands:
-// git add .
-// git commit -m "Add TODO app"
-// git branch -M main
-// git remote add origin https://github.com/your-username/your-repo.git
-// git push -u origin main
+// Add new task
+form.addEventListener("submit", function(e) {
+
+    e.preventDefault();
+
+    var title = document.getElementById("todo-title").value;
+    var description = document.getElementById("todo-description").value;
+    var date = document.getElementById("todo-date").value;
+    var priority = document.getElementById("todo-priority").value;
+
+    // Create task
+    var task = {
+        title: title,
+        description: description,
+        date: date,
+        priority: priority
+    };
+
+    // Add task to array
+    tasks.push(task);
+
+    // Save tasks
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+
+    // Show task
+    showTask(task);
+
+    // Clear form
+    form.reset();
+});
+
+// Function to show task
+function showTask(task) {
+
+    var li = document.createElement("li");
+
+    li.className = "task-item";
+
+    li.innerHTML =
+        "<h3>" + task.title + "</h3>" +
+        "<p>" + task.description + "</p>" +
+        "<p>Due: " + task.date + "</p>" +
+        "<p>Priority: " + task.priority + "</p>" +
+        "<button onclick='deleteTask(this)'>Delete</button>";
+
+    list.appendChild(li);
+}
+
+// Delete task
+function deleteTask(button) {
+
+    var task = button.parentElement;
+
+    // Remove from page
+    task.remove();
     
+    // Get task title
+    var title = task.querySelector("h3").innerText;
+
+    // Find and remove task from array
+    for (var i = 0; i < tasks.length; i++) {
+
+        if (tasks[i].title == title) {
+            tasks.splice(i, 1);
+            break;
+        }
+    }
+
+    // Save updated tasks
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
